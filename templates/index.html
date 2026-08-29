@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predictive Placement Model AI</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Plus+Jakarta+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="glow-bg"></div>
+    <div class="glow-bg-secondary"></div>
+    
+    <div class="container">
+        <!-- Sidebar Info -->
+        <div class="info-panel">
+            <div class="brand">
+                <i class="fa-solid fa-graduation-cap logo-icon"></i>
+                <div class="brand-text">
+                    <h1>Placement.AI</h1>
+                    <span>Student Employability Analytics</span>
+                </div>
+            </div>
+            
+            <p class="description">
+                Leverage advanced machine learning analytics to evaluate student profiles and predict career placement probability based on core credentials.
+            </p>
+            
+            <div class="features-list">
+                <div class="feature-item">
+                    <i class="fa-solid fa-chart-line feature-icon"></i>
+                    <div>
+                        <h4>Predictive Analytics</h4>
+                        <p>Evaluate CGPA and IQ correlation against past performance metrics.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <i class="fa-solid fa-brain feature-icon"></i>
+                    <div>
+                        <h4>Smart Profile Mapping</h4>
+                        <p>Analyze categorical field specializations via trained LabelEncoder weights.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <i class="fa-solid fa-shield-halved feature-icon"></i>
+                    <div>
+                        <h4>Precision Scoring</h4>
+                        <p>Calculated probabilities from a trained RandomForest classifier.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-note">
+                <p>Version 2.0 • Powered by RandomForestClassifier</p>
+            </div>
+        </div>
+        
+        <!-- Main Form Panel -->
+        <div class="main-panel">
+            <div class="header-text">
+                <h2>Predict Placement Probability</h2>
+                <p>Input candidate metrics below to generate a probability estimate.</p>
+            </div>
+            
+            <form action="/predict" method="POST" class="predict-form">
+                <div class="input-group">
+                    <label for="cgpa">
+                        <i class="fa-solid fa-award"></i> Cumulative CGPA
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" step="0.01" min="5.0" max="10.0" name="cgpa" id="cgpa" 
+                               value="{{ cgpa if cgpa else '8.50' }}" required>
+                        <span class="input-suffix">/ 10.0</span>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" min="5.0" max="10.0" step="0.01" class="range-slider" id="cgpa-slider" 
+                               value="{{ cgpa if cgpa else '8.50' }}">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="iq">
+                        <i class="fa-solid fa-brain"></i> Intelligence Quotient (IQ)
+                    </label>
+                    <div class="input-wrapper">
+                        <input type="number" min="70" max="150" name="iq" id="iq" 
+                               value="{{ iq if iq else '110' }}" required>
+                        <span class="input-suffix">Score</span>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" min="70" max="150" step="1" class="range-slider" id="iq-slider" 
+                               value="{{ iq if iq else '110' }}">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="profile">
+                        <i class="fa-solid fa-user-gear"></i> Specialization Profile
+                    </label>
+                    <div class="select-wrapper">
+                        <select name="profile" id="profile" required>
+                            {% for p in profiles %}
+                                <option value="{{ p }}" {% if selected_profile == p %}selected{% endif %}>{{ p }}</option>
+                            {% endfor %}
+                        </select>
+                        <i class="fa-solid fa-chevron-down select-chevron"></i>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    <span>Analyze Candidate</span>
+                    <i class="fa-solid fa-arrows-spin loading-icon" style="display: none;"></i>
+                    <i class="fa-solid fa-arrow-trend-up btn-arrow"></i>
+                </button>
+            </form>
+            
+            <!-- Result Container -->
+            {% if prediction %}
+                <div class="result-container animate-fade-in">
+                    {% if prediction == 'Placed' %}
+                        <div class="result-card placed-card">
+                            <div class="result-icon">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                            <div class="result-details">
+                                <span class="status-label">ANALYSIS RESULT</span>
+                                <h3 class="status-value text-placed">High Placement Probability</h3>
+                                <p class="status-desc">This candidate satisfies the key indicators for hiring partners.</p>
+                                <div class="metric-meter">
+                                    <div class="meter-bar placed-bar" style="width: {{ confidence }}%"></div>
+                                </div>
+                                <span class="confidence-label">Confidence: <strong>{{ confidence }}%</strong></span>
+                            </div>
+                        </div>
+                    {% elif prediction == 'Not Placed' %}
+                        <div class="result-card not-placed-card">
+                            <div class="result-icon">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                            </div>
+                            <div class="result-details">
+                                <span class="status-label">ANALYSIS RESULT</span>
+                                <h3 class="status-value text-not-placed">Low Placement Probability</h3>
+                                <p class="status-desc">Enhancing CGPA or project portfolios may increase placement rates.</p>
+                                <div class="metric-meter">
+                                    <div class="meter-bar not-placed-bar" style="width: {{ confidence }}%"></div>
+                                </div>
+                                <span class="confidence-label">Confidence: <strong>{{ confidence }}%</strong></span>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="result-card error-card">
+                            <div class="result-icon">
+                                <i class="fa-solid fa-circle-exclamation"></i>
+                            </div>
+                            <div class="result-details">
+                                <span class="status-label">ERROR</span>
+                                <h3 class="status-value text-error">Execution Failed</h3>
+                                <p class="status-desc">{{ message }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Script for interactive sliders sync -->
+    <script>
+        const cgpaInput = document.getElementById('cgpa');
+        const cgpaSlider = document.getElementById('cgpa-slider');
+        const iqInput = document.getElementById('iq');
+        const iqSlider = document.getElementById('iq-slider');
+
+        // Sync CGPA
+        cgpaInput.addEventListener('input', (e) => {
+            cgpaSlider.value = e.target.value;
+        });
+        cgpaSlider.addEventListener('input', (e) => {
+            cgpaInput.value = e.target.value;
+        });
+
+        // Sync IQ
+        iqInput.addEventListener('input', (e) => {
+            iqSlider.value = e.target.value;
+        });
+        iqSlider.addEventListener('input', (e) => {
+            iqInput.value = e.target.value;
+        });
+        
+        // Show loader on submit
+        const form = document.querySelector('.predict-form');
+        const submitBtn = document.querySelector('.submit-btn');
+        const loadingIcon = document.querySelector('.loading-icon');
+        const btnArrow = document.querySelector('.btn-arrow');
+        
+        form.addEventListener('submit', () => {
+            submitBtn.style.pointerEvents = 'none';
+            submitBtn.style.opacity = '0.8';
+            loadingIcon.style.display = 'inline-block';
+            loadingIcon.style.animation = 'spin 1s linear infinite';
+            btnArrow.style.display = 'none';
+        });
+    </script>
+</body>
+</html>
